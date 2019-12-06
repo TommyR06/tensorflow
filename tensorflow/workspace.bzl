@@ -638,6 +638,16 @@ def tf_repositories(path_prefix = "", tf_repo_name = ""):
         ],
     )
 
+    tf_http_archive(
+        name = "systemc",
+        build_file = clean_dep("//third_party:systemc.BUILD"),
+        sha256 = "5781b9a351e5afedabc37d145e5f7edec08f3fd5de00ffeb8fa1f3086b1f7b3f",
+        urls = [
+            "https://www.accellera.org/images/downloads/standards/systemc/systemc-2.3.3.tar.gz",
+            "https://www.accellera.org/images/downloads/standards/systemc/systemc-2.3.3.tar.gz",
+        ],
+    )
+
     java_import_external(
         name = "junit",
         jar_sha256 = "59721f0805e223d84b90677887d9ff567dc534d7c502ca903c0c2b17f05c116a",

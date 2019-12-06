@@ -35,6 +35,7 @@ cc_binary(
     deps = [
         ":benchmark_tflite_model_lib",
         ":logging",
+        "@systemc//:systemc",
     ],
 )
 

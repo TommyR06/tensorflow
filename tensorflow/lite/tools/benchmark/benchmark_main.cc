@@ -17,6 +17,7 @@ limitations under the License.
 
 #include "tensorflow/lite/tools/benchmark/benchmark_tflite_model.h"
 #include "tensorflow/lite/tools/benchmark/logging.h"
+#include <systemc/systemc.h>
 
 namespace tflite {
 namespace benchmark {
