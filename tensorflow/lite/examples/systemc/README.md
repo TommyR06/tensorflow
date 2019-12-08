@@ -7,7 +7,7 @@ See `https://github.com/bazelbuild/bazel/issues/10384`
 Please compile and run with:
 
 ```
-bazel build --jobs 1 //tensorflow/lite/tools/systemc:systemc_model
+bazel build --jobs 1 //tensorflow/lite/examples/systemc:systemc_model
 bazel run //tensorflow/lite/examples/systemc:systemc_model
 
 ```
