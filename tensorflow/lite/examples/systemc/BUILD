@@ -60,67 +60,22 @@ cc_binary(
     ],
 )
 
-# cc_library(
-#     name = "benchmark_tflite_model_lib",
-#     srcs = ["benchmark_tflite_model.cc"],
-#     hdrs = ["benchmark_tflite_model.h"],
-#     copts = common_copts + select({
-#         "//tensorflow:ios": [
-#             "-xobjective-c++",
-#         ],
-#         "//conditions:default": [],
-#     }),
-#     deps = [
-#         ":benchmark_model_lib",
-#         ":benchmark_utils",
-#         ":logging",
-#         "@com_google_absl//absl/base:core_headers",
-#         "@com_google_absl//absl/strings",
-#         "@gemmlowp",
-#         "//tensorflow/lite:framework",
-#         "//tensorflow/lite:string_util",
-#         "//tensorflow/lite/kernels:builtin_ops",
-#         "//tensorflow/lite/nnapi:nnapi_util",
-#         "//tensorflow/lite/profiling:profile_summarizer",
-#         "//tensorflow/lite/profiling:profiler",
-#         "//tensorflow/lite/tools/evaluation:utils",
-#     ] + select({
-#         "//tensorflow:android": [
-#             "//tensorflow/lite/delegates/gpu:delegate",
-#         ],
-#         "//tensorflow:ios": [
-#             "//tensorflow/lite/delegates/gpu:metal_delegate",
-#         ],
-#         "//conditions:default": [],
-#     }),
-# )
-# 
-# cc_library(
-#     name = "benchmark_model_lib",
-#     srcs = [
-#         "benchmark_model.cc",
-#     ],
-#     hdrs = ["benchmark_model.h"],
-#     copts = common_copts,
-#     deps = [
-#         ":benchmark_params",
-#         ":benchmark_utils",
-#         ":logging",
-#         "//tensorflow/core:stats_calculator_portable",
-#         "//tensorflow/lite:framework",
-#         "//tensorflow/lite/c:common",
-#         "//tensorflow/lite/profiling:memory_info",
-#         "//tensorflow/lite/profiling:time",
-#         "//tensorflow/lite/tools:command_line_flags",
-#     ],
-# )
-# 
-# cc_library(
-#     name = "benchmark_utils",
-#     srcs = [
-#         "benchmark_utils.cc",
-#     ],
-#     hdrs = ["benchmark_utils.h"],
-#     copts = common_copts,
-#     deps = ["//tensorflow/lite/profiling:time"],
-# )
+cc_test(
+    name = "sc_example_test",
+    srcs = ["sc_gtest_test.sc.cc"],
+    args = [
+        "",
+    ],
+    tags = [
+        "tflite_not_portable_android",
+        "tflite_not_portable_ios",
+    ],
+    deps = [
+        "//tensorflow/lite/testing:util",
+        "@com_google_absl//absl/algorithm",
+        "@com_google_googletest//:gtest",
+        "@systemc//:systemc",
+    ],
+)
+
+tflite_portable_test_suite()
