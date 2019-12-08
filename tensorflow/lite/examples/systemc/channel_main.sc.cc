@@ -1,9 +1,9 @@
 // Created by Nicolas Agostini
 
-#include <systemc.h>
-#include "stack.h"
-#include "producer.h"
-#include "consumer.h"
+#include <systemc/systemc.h>
+#include "tensorflow/lite/examples/systemc/channel/stack.sc.h"
+#include "tensorflow/lite/examples/systemc/channel/producer.sc.h"
+#include "tensorflow/lite/examples/systemc/channel/consumer.sc.h"
 
 
 int sc_main(int argc, char* argv[]) {

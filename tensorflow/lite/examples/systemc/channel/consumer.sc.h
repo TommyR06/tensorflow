@@ -4,7 +4,7 @@
 #define CONSUMER_H
 
 #include <systemc/systemc.h>
-#include "stack_if.h"
+#include "stack_if.sc.h"
 
 class consumer : public sc_module {
   public:
