@@ -4,7 +4,7 @@
 #define STACK_H
 
 #include <systemc/systemc.h>
-#include "stack_if.h"
+#include "stack_if.sc.h"
 
 /// Implements the virtual functions in the stack interface
 class stack : public sc_module, public stack_write_if, public stack_read_if {
