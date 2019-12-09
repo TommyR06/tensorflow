@@ -27,6 +27,8 @@ limitations under the License.
 #include "tensorflow/lite/kernels/cpu_backend_gemm_params.h"
 #include "tensorflow/lite/kernels/cpu_backend_gemm_ruy.h"
 
+#include "tensorflow/lite/kernels/modeling/util.sc.h"
+
 namespace tflite {
 namespace cpu_backend_gemm {
 namespace detail {
@@ -104,6 +106,11 @@ struct GemmImplUsingGemmlowp<
     SaturatingCastStageType saturating_cast_stage;
     using BitDepthParams = typename GemmlowpBitDepthParams<SrcScalar>::Type;
     if (params.bias) {
+#ifdef TFLITE_SOC_VERBOSE
+      tflite_soc::say_hello();
+      tflite_soc::PrintMatrices<LhsScalar, RhsScalar, DstScalar>(
+          lhs_params, lhs_data, rhs_params, rhs_data, dst_params, dst_data);
+#endif
       ColVectorMap bias_vector(params.bias, lhs_params.rows);
       gemmlowp::OutputStageBiasAddition<ColVectorMap> bias_addition_stage;
       bias_addition_stage.bias_vector = bias_vector;
@@ -121,6 +128,10 @@ struct GemmImplUsingGemmlowp<
           &gemmlowp_dst, -lhs_params.zero_point, -rhs_params.zero_point,
           output_pipeline);
     }
+#ifdef TFLITE_SOC_VERBOSE
+    printf("\nout after op (%d,%d)\n", dst_params.rows, dst_params.cols);
+    tflite_soc::PrintMatrix<DstScalar>(dst_params, dst_data);
+#endif
   }
 };
 

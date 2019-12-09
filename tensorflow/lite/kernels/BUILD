@@ -308,6 +308,20 @@ cc_test(
 )
 
 cc_library(
+    name = "cpu_backend_gemm_lib",
+    hdrs = [
+        "cpu_backend_gemm.h",
+        "cpu_backend_gemm_params.h",
+    ],
+    copts = tflite_copts(),
+    deps = [
+        #"//tensorflow/lite/kernels/internal:common",
+        "//tensorflow/lite/kernels/internal:compatibility",
+        #"//tensorflow/lite/kernels/internal:types",
+    ],
+)
+
+cc_library(
     name = "cpu_backend_gemm",
     srcs = [
         "cpu_backend_gemm_custom_gemv.h",
@@ -316,10 +330,10 @@ cc_library(
         "cpu_backend_gemm_gemmlowp.h",
         "cpu_backend_gemm_ruy.h",
     ],
-    hdrs = [
-        "cpu_backend_gemm.h",
-        "cpu_backend_gemm_params.h",
-    ],
+    # hdrs = [
+    #     "cpu_backend_gemm.h",
+    #     "cpu_backend_gemm_params.h",
+    # ],
     copts = tflite_copts(),
     deps = [
         ":tflite_with_ruy",
@@ -328,6 +342,8 @@ cc_library(
         "//tensorflow/lite/kernels/internal:types",
         ":cpu_backend_context",
         ":cpu_backend_threadpool",
+        # Isolated so it can be used by systemc
+        "//tensorflow/lite/kernels:cpu_backend_gemm_lib",
         # Depend on ruy regardless of `tflite_with_ruy`. See the comment in
         # cpu_backend_gemm.h about why ruy is the generic path.
         "//tensorflow/lite/experimental/ruy",
@@ -337,6 +353,7 @@ cc_library(
         # defeat copybara's rewriting rules.
         "@gemmlowp",
         "//third_party/eigen3",
+        "//tensorflow/lite/kernels/modeling:util"
     ],
 )
 
