@@ -95,9 +95,14 @@ void TestGemm(int rows, int depth, int cols, SystolicDut& dut,
 
   dut.Test(dst_data.data());
   trigger = 1;
-  sc_start(20,SC_NS);
+  sc_start(19,SC_NS);
   trigger = 0;
-
+  sc_start(1,SC_NS);
+  
+  trigger = 1;
+  sc_start(19,SC_NS);
+  trigger = 0;
+  sc_start(1,SC_NS);
 }
 
 }  // namespace tflite_soc

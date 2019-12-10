@@ -20,9 +20,35 @@ void SystolicDut::SetupGemm(int lhs_width_, int depth_, int rhs_width_,
 template <typename DstScalar>
 void SystolicDut::Test(DstScalar* data) {}
 
-void SystolicDut::Gemm() {
+inline void ReLu(int & v) {
+  if (v < 0)
+    v = 0;
+}
 
-  *out_data =1;
+void SystolicDut::Gemm() {
+  while (1) {
+    for (int i = 0; i < lhs_width*rhs_width; i++)
+      out_data[i]=0;
+
+    for (int iA = 0; iA < lhs_width; iA++) {
+      int tj = 0.0;
+      for (int jA = 0; jA < depth; jA++) {
+        int pA2 = iA * depth + jA;
+        int tk = 0.0;
+        for (int kB = 0; kB < rhs_width; kB++) {
+          int pB2 = jA * rhs_width + kB;
+          tk += rhs_data[pB2];
+        }
+        tj += lhs_data[pA2] * tk;
+      }
+      out_data[iA] = tj;
+    }
+
+    // Apply fused ReLu
+    for (int i = 0; i < lhs_width*rhs_width; i++)
+      ReLu(out_data[i]);
+    wait();
+  }
 }
 
 template void SystolicDut::Test<int>(int*);
