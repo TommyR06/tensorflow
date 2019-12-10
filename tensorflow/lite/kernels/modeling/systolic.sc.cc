@@ -7,12 +7,15 @@ namespace tflite_soc {
 template <typename LhsScalar, typename RhsScalar, typename DstScalar>
 void SystolicDut::SetupGemm(int lhs_width_, int depth_, int rhs_width_,
                LhsScalar const* lhs_data_, RhsScalar const* rhs_data_,
-               DstScalar* out_data_) {}
+               DstScalar* out_data_) {
 
-// void SetupGemm(int lhs_width_, int depth_, int rhs_width_,
-//                int const* lhs_data_, int const* rhs_data_,
-//                int* out_data_) {
-//                }
+  lhs_width = lhs_width_;
+  depth = depth_;
+  rhs_width = rhs_width_;
+  lhs_data = lhs_data_;
+  rhs_data = rhs_data_;
+  out_data = out_data_;
+}
 
 template <typename DstScalar>
 void SystolicDut::Test(DstScalar* data) {}

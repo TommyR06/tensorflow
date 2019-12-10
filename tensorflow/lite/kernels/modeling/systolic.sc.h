@@ -64,8 +64,8 @@ SC_MODULE(SystolicDut) {
     int lhs_width;
     int depth;
     int rhs_width;
-    int* lhs_data;
-    int* rhs_data;
+    int const* lhs_data;
+    int const* rhs_data;
     int* out_data;
 };
 

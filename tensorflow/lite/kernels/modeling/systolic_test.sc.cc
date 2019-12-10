@@ -88,10 +88,10 @@ void TestGemm(int rows, int depth, int cols, SystolicDut& dut,
 
   GemmParams<AccumScalar, DstScalar> params;
 
-  // dut.SetupGemm(rows, depth, cols, 
-  //               lhs_data.data(), 
-  //               rhs_data.data(), 
-  //               dst_data.data());
+  dut.SetupGemm(rows, depth, cols, 
+                lhs_data.data(), 
+                rhs_data.data(), 
+                dst_data.data());
 
   dut.Test(dst_data.data());
   trigger = 1;
