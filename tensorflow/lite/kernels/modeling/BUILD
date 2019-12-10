@@ -23,3 +23,39 @@ cc_library(
         "@systemc//:systemc",
     ],
 )
+
+cc_library(
+    name = "systolic_lib",
+    srcs = [
+        "systolic.sc.cc",
+        "util.sc.h",
+        ],
+    hdrs = [
+        "systolic.sc.h",
+    ],
+    copts = common_copts,
+    deps = [
+        "//tensorflow/lite/kernels:cpu_backend_gemm_lib",
+        "@systemc//:systemc",
+    ],
+)
+
+cc_binary(
+    name = "systolic_run",
+    srcs = [
+        "systolic_test.sc.cc",
+        ],
+    copts = common_copts,
+    linkopts = tflite_linkopts() + select({
+        "//tensorflow:android": [
+            "-pie",  # Android 5.0 and later supports only PIE
+            "-lm",  # some builtin ops, e.g., tanh, need -lm
+        ],
+        "//conditions:default": [],
+    }),
+    deps = [
+        "//tensorflow/lite/kernels:cpu_backend_gemm_lib",
+        "//tensorflow/lite/kernels/modeling:systolic_lib",
+        "@systemc//:systemc",
+    ],
+)
