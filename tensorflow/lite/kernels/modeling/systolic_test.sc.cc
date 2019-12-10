@@ -88,10 +88,12 @@ void TestGemm(int rows, int depth, int cols, SystolicDut& dut,
 
   GemmParams<AccumScalar, DstScalar> params;
 
-  dut.SetupGemm(rows, depth, cols, 
-                lhs_data.data, 
-                rhs_data.data, 
-                dst_data.data);
+  // dut.SetupGemm(rows, depth, cols, 
+  //               lhs_data.data(), 
+  //               rhs_data.data(), 
+  //               dst_data.data());
+
+  dut.Test(dst_data.data());
   trigger = 1;
   sc_start(20,SC_NS);
   trigger = 0;
@@ -115,6 +117,5 @@ int sc_main(int argc, char* argv[]) {
   const int depth = 512;
   tflite_soc::TestGemm<int, int, int, int>(rows, depth, cols, s1, trigger);
 
-  sc_start(5000, SC_NS);
   return (0);
 }

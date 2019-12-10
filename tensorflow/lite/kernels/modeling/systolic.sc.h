@@ -4,6 +4,7 @@
 #define TENSORFLOW_LITE_KERNELS_MODELING_SYSTOLIC_H_
 
 #include <systemc/systemc.h>
+#include "tensorflow/lite/kernels/cpu_backend_gemm_params.h"
 
 namespace tflite_soc {
 
@@ -31,8 +32,14 @@ SC_MODULE(SystolicDut) {
   //                   Depth
   void Gemm();
 
-  void SetupGemm(int lhs_width_, int depth_, int rhs_width_, int* lhs_data_,
-                 int* rhs_data_, int* out_data_);
+  // Function to test template
+  template <typename DstScalar>
+  void Test(DstScalar * data);
+
+  template <typename LhsScalar, typename RhsScalar, typename DstScalar>
+  void SetupGemm(int lhs_width_, int depth_, int rhs_width_,
+                 LhsScalar const* lhs_data_, RhsScalar const* rhs_data_,
+                 DstScalar* out_data_);
 
   SC_HAS_PROCESS(SystolicDut);
 
@@ -61,5 +68,7 @@ SC_MODULE(SystolicDut) {
     int* rhs_data;
     int* out_data;
 };
+
+// template<> void SystolicDut::Test<int>( int*);
 }
 #endif
