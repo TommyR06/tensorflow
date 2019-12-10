@@ -46,7 +46,8 @@ void MakeDeterministicPseudoRandomVector(int size,
 
 template <typename LhsScalar, typename RhsScalar, typename AccumScalar,
           typename DstScalar>
-void TestGemm(int rows, int depth, int cols, SystolicDut & dut) {
+void TestGemm(int rows, int depth, int cols, SystolicDut& dut,
+              sc_signal<bool>& trigger) {
   std::default_random_engine random_engine;
   std::vector<LhsScalar> lhs_data;
   std::vector<RhsScalar> rhs_data;
@@ -87,7 +88,14 @@ void TestGemm(int rows, int depth, int cols, SystolicDut & dut) {
 
   GemmParams<AccumScalar, DstScalar> params;
 
-  dut.Gemm();
+  dut.SetupGemm(rows, depth, cols, 
+                lhs_data.data, 
+                rhs_data.data, 
+                dst_data.data);
+  trigger = 1;
+  sc_start(20,SC_NS);
+  trigger = 0;
+
 }
 
 }  // namespace tflite_soc
@@ -96,13 +104,16 @@ int sc_main(int argc, char* argv[]) {
   sc_clock clk_slow("ClkSlow", 100.0, SC_NS);
   sc_clock clk_fast("ClkFast", 50.0, SC_NS);
 
+  sc_signal<bool> trigger;
+
   tflite_soc::SystolicDut s1("DUT", 64, true);
   s1.clock(clk_slow);
+  s1.run_gemm(trigger);
 
   const int rows = 128;
   const int cols = 128;
   const int depth = 512;
-  tflite_soc::TestGemm<int, int, int, int>(rows, depth, cols, s1);
+  tflite_soc::TestGemm<int, int, int, int>(rows, depth, cols, s1, trigger);
 
   sc_start(5000, SC_NS);
   return (0);
