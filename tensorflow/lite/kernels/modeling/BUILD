@@ -32,6 +32,8 @@ cc_library(
         "sc_template.sc.cc",
         "systolic_stim.sc.cc",
         "systolic_mon.sc.cc",
+        "comm_channels.sc.cc",
+        "comm_channels.sc.h",
         ],
     hdrs = [
         "systolic.sc.h",
@@ -61,6 +63,25 @@ cc_binary(
     }),
     deps = [
         "//tensorflow/lite/kernels:cpu_backend_gemm_lib",
+        "//tensorflow/lite/kernels/modeling:systolic_lib",
+        "@systemc//:systemc",
+    ],
+)
+
+cc_binary(
+    name = "channel_test",
+    srcs = [
+        "comm_channels_test.sc.cc",
+        ],
+    copts = common_copts,
+    linkopts = tflite_linkopts() + select({
+        "//tensorflow:android": [
+            "-pie",  # Android 5.0 and later supports only PIE
+            "-lm",  # some builtin ops, e.g., tanh, need -lm
+        ],
+        "//conditions:default": [],
+    }),
+    deps = [
         "//tensorflow/lite/kernels/modeling:systolic_lib",
         "@systemc//:systemc",
     ],
