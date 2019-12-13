@@ -29,9 +29,11 @@ cc_library(
     srcs = [
         "systolic.sc.cc",
         "util.sc.h",
+        "sc_template.sc.cc",
         ],
     hdrs = [
         "systolic.sc.h",
+        "sc_template.sc.h",
     ],
     copts = common_copts,
     deps = [
