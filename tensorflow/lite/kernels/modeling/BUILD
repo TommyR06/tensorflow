@@ -30,10 +30,14 @@ cc_library(
         "systolic.sc.cc",
         "util.sc.h",
         "sc_template.sc.cc",
+        "systolic_stim.sc.cc",
+        "systolic_mon.sc.cc",
         ],
     hdrs = [
         "systolic.sc.h",
         "sc_template.sc.h",
+        "systolic_stim.sc.h",
+        "systolic_mon.sc.h",
     ],
     copts = common_copts,
     deps = [
