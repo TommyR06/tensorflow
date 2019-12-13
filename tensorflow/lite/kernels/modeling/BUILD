@@ -69,7 +69,7 @@ cc_binary(
 )
 
 cc_binary(
-    name = "channel_test",
+    name = "channel_run",
     srcs = [
         "comm_channels_test.sc.cc",
         ],
