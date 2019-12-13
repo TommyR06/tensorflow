@@ -105,12 +105,12 @@ struct GemmImplUsingGemmlowp<
     clamp_stage.max = params.clamp_max;
     SaturatingCastStageType saturating_cast_stage;
     using BitDepthParams = typename GemmlowpBitDepthParams<SrcScalar>::Type;
-    if (params.bias) {
-#ifdef TFLITE_SOC_VERBOSE
-      tflite_soc::say_hello();
+#ifdef TOGGLE_TFLITE_SOC
+    // printf("%d,%d,%d\n", lhs_params.rows, lhs_params.cols, rhs_params.cols);
       tflite_soc::PrintMatrices<LhsScalar, RhsScalar, DstScalar>(
           lhs_params, lhs_data, rhs_params, rhs_data, dst_params, dst_data);
 #endif
+    if (params.bias) {
       ColVectorMap bias_vector(params.bias, lhs_params.rows);
       gemmlowp::OutputStageBiasAddition<ColVectorMap> bias_addition_stage;
       bias_addition_stage.bias_vector = bias_vector;
@@ -128,8 +128,9 @@ struct GemmImplUsingGemmlowp<
           &gemmlowp_dst, -lhs_params.zero_point, -rhs_params.zero_point,
           output_pipeline);
     }
-#ifdef TFLITE_SOC_VERBOSE
-    printf("\nout after op (%d,%d)\n", dst_params.rows, dst_params.cols);
+#ifdef TOGGLE_TFLITE_SOC
+    printf("\nout after OP execution (%d,%d)\n", dst_params.rows,
+           dst_params.cols);
     tflite_soc::PrintMatrix<DstScalar>(dst_params, dst_data);
 #endif
   }
