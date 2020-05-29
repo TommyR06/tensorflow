@@ -19,7 +19,8 @@ limitations under the License.
 // non-portable function.
 #ifdef TF_LITE_MCU_DEBUG_LOG
 
-#include "tensorflow/lite/experimental/micro/micro_error_reporter.h"
+#include "tensorflow/lite/micro/debug_log.h"
+#include "tensorflow/lite/micro/micro_error_reporter.h"
 
 #define DEBUG_LOG(x) \
   do {               \
@@ -31,7 +32,7 @@ inline void InfiniteLoop() {
   while (1) {
   }
 }
-#define TFLITE_ASSERT_FALSE InfiniteLoop();
+
 #define TFLITE_ABORT InfiniteLoop();
 
 #else  // TF_LITE_MCU_DEBUG_LOG
@@ -47,13 +48,13 @@ inline void InfiniteLoop() {
 
 #define TFLITE_ABORT abort()
 
+#endif  // TF_LITE_MCU_DEBUG_LOG
+
 #ifdef NDEBUG
 #define TFLITE_ASSERT_FALSE (static_cast<void>(0))
 #else
 #define TFLITE_ASSERT_FALSE TFLITE_ABORT
 #endif
-
-#endif  // TF_LITE_MCU_DEBUG_LOG
 
 #define TF_LITE_FATAL(msg)  \
   do {                      \

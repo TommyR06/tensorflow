@@ -18,6 +18,8 @@ limitations under the License.
 #include <stdint.h>
 #include <stdio.h>
 
+#include <string>
+
 typedef struct AHardwareBuffer AHardwareBuffer;
 
 // NN api types based on NNAPI header file
@@ -134,6 +136,13 @@ enum {
   ANEURALNETWORKS_UNIDIRECTIONAL_SEQUENCE_LSTM = 92,
   ANEURALNETWORKS_UNIDIRECTIONAL_SEQUENCE_RNN = 93,
   ANEURALNETWORKS_RESIZE_NEAREST_NEIGHBOR = 94,
+  ANEURALNETWORKS_QUANTIZED_LSTM = 95,
+  ANEURALNETWORKS_IF = 96,
+  ANEURALNETWORKS_WHILE = 97,
+  ANEURALNETWORKS_ELU = 98,
+  ANEURALNETWORKS_HARD_SWISH = 99,
+  ANEURALNETWORKS_FILL = 100,
+  ANEURALNETWORKS_RANK = 101,
 };
 
 /**
@@ -159,6 +168,7 @@ enum {
 /**
  * Result codes.
  */
+// LINT.IfChange
 enum {
   ANEURALNETWORKS_NO_ERROR = 0,
   ANEURALNETWORKS_OUT_OF_MEMORY = 1,
@@ -170,7 +180,13 @@ enum {
   ANEURALNETWORKS_UNMAPPABLE = 7,
   ANEURALNETWORKS_OUTPUT_INSUFFICIENT_SIZE = 8,
   ANEURALNETWORKS_UNAVAILABLE_DEVICE = 9,
+  ANEURALNETWORKS_MISSED_DEADLINE_TRANSIENT = 10,
+  ANEURALNETWORKS_MISSED_DEADLINE_PERSISTENT = 11,
+  ANEURALNETWORKS_RESOURCE_EXHAUSTED_TRANSIENT = 12,
+  ANEURALNETWORKS_RESOURCE_EXHAUSTED_PERSISTENT = 13,
+  ANEURALNETWORKS_DEAD_OBJECT = 14,
 };
+// LINT.ThenChange(//tensorflow/lite/delegates/nnapi/nnapi_delegate.cc:NnApiErrorDescription)
 
 /**
  * Implicit padding algorithms.
@@ -197,6 +213,18 @@ enum {
   ANEURALNETWORKS_DEVICE_GPU = 3,
   /** Dedicated accelerator for Machine Learning workloads. */
   ANEURALNETWORKS_DEVICE_ACCELERATOR = 4,
+};
+
+/**
+ * Relative execution priority.
+ *
+ * Available since API level 30.
+ */
+enum {
+  ANEURALNETWORKS_PRIORITY_LOW = 90,
+  ANEURALNETWORKS_PRIORITY_MEDIUM = 100,
+  ANEURALNETWORKS_PRIORITY_HIGH = 110,
+  ANEURALNETWORKS_PRIORITY_DEFAULT = ANEURALNETWORKS_PRIORITY_MEDIUM,
 };
 
 /**
@@ -512,8 +540,20 @@ typedef int (*ANeuralNetworksCompilation_setCaching_fn)(
     ANeuralNetworksCompilation* compilation, const char* cacheDir,
     const uint8_t* token);
 
+typedef int (*ANeuralNetworksCompilation_setTimeout_fn)(
+    ANeuralNetworksCompilation* compilation, uint64_t duration);
+
+typedef int (*ANeuralNetworksCompilation_setPriority_fn)(
+    ANeuralNetworksCompilation* compilation, int priority);
+
 typedef int (*ANeuralNetworksExecution_compute_fn)(
     ANeuralNetworksExecution* execution);
+
+typedef int (*ANeuralNetworksExecution_setTimeout_fn)(
+    ANeuralNetworksExecution* execution, uint64_t duration);
+
+typedef int (*ANeuralNetworksExecution_setLoopTimeout_fn)(
+    ANeuralNetworksExecution* execution, uint64_t duration);
 
 typedef int (*ANeuralNetworksExecution_getOutputOperandRank_fn)(
     ANeuralNetworksExecution* execution, int32_t index, uint32_t* rank);
@@ -547,5 +587,21 @@ typedef enum {
 typedef int (*ANeuralNetworksExecution_getDuration_fn)(
     const ANeuralNetworksExecution* execution, int32_t durationCode,
     uint64_t* duration);
+
+typedef int (*ANeuralNetworksDevice_getExtensionSupport_fn)(
+    const ANeuralNetworksDevice* device, const char* extensionName,
+    bool* isExtensionSupported);
+
+typedef int (*ANeuralNetworksModel_getExtensionOperandType_fn)(
+    ANeuralNetworksModel* model, const char* extensionName,
+    uint16_t operandCodeWithinExtension, int32_t* type);
+
+typedef int (*ANeuralNetworksModel_getExtensionOperationType_fn)(
+    ANeuralNetworksModel* model, const char* extensionName,
+    uint16_t operationCodeWithinExtension, ANeuralNetworksOperationType* type);
+
+typedef int (*ANeuralNetworksModel_setOperandExtensionData_fn)(
+    ANeuralNetworksModel* model, int32_t index, const void* data,
+    size_t length);
 
 #endif  // TENSORFLOW_LITE_NNAPI_NEURALNETWORKSTYPES_H_

@@ -20,7 +20,7 @@ source tensorflow/tools/ci_build/release/common.sh
 
 install_ubuntu_16_pip_deps pip3.7
 # Update bazel
-update_bazel_linux
+install_bazelisk
 
 # Export required variables for running pip.sh
 export OS_TYPE="UBUNTU"
@@ -32,7 +32,7 @@ export TF_NEED_GCP=1
 export TF_NEED_HDFS=1
 export TF_NEED_S3=1
 export TF_NEED_CUDA=1
-export TF_CUDA_VERSION=10.1
+export TF_CUDA_VERSION=10
 export TF_CUDNN_VERSION=7
 export TF_NEED_TENSORRT=1
 export TENSORRT_INSTALL_PATH=/usr/local/tensorrt
@@ -59,7 +59,7 @@ export TF_TEST_FLAGS="--test_tag_filters=${TF_TEST_FILTER_TAGS} --build_tag_filt
 --run_under=//tensorflow/tools/ci_build/gpu_build:parallel_gpu_execute "
 export TF_TEST_TARGETS="${DEFAULT_BAZEL_TARGETS} -//tensorflow/lite/... "
 export TF_PIP_TESTS="test_pip_virtualenv_non_clean test_pip_virtualenv_clean"
-export IS_NIGHTLY=0 # Not nightly
+#export IS_NIGHTLY=0 # Not nightly; uncomment if building from tf repo.
 export TF_PROJECT_NAME=${PROJECT_NAME}
 export TF_PIP_TEST_ROOT="pip_test"
 

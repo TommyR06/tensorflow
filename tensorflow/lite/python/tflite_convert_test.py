@@ -19,8 +19,10 @@ from __future__ import division
 from __future__ import print_function
 
 import os
+
 import numpy as np
 
+from tensorflow.lite.python import tflite_convert
 from tensorflow.python import keras
 from tensorflow.python import tf2
 from tensorflow.python.client import session
@@ -96,8 +98,8 @@ class TfLiteConvertV1Test(TestModels):
     sess.close()
 
     flags_str = ('--graph_def_file={0} --input_arrays={1} '
-                 '--output_arrays={2}'.format(graph_def_file,
-                                              'Placeholder', 'add'))
+                 '--output_arrays={2}'.format(graph_def_file, 'Placeholder',
+                                              'add'))
     self._run(flags_str, should_succeed=True)
     os.remove(graph_def_file)
 
@@ -116,9 +118,10 @@ class TfLiteConvertV1Test(TestModels):
     write_graph(sess.graph_def, '', graph_def_file, False)
     sess.close()
 
-    flags_str = ('--graph_def_file={0} --input_arrays={1} '
-                 '--output_arrays={2} --experimental_legacy_converter'.format(
-                     graph_def_file, 'Placeholder', 'add'))
+    flags_str = (
+        '--graph_def_file={0} --input_arrays={1} '
+        '--output_arrays={2} --experimental_new_converter=false'.format(
+            graph_def_file, 'Placeholder', 'add'))
     self._run(flags_str, should_succeed=True)
     os.remove(graph_def_file)
 
@@ -134,8 +137,31 @@ class TfLiteConvertV1Test(TestModels):
     sess.close()
 
     flags_str = ('--graph_def_file={0} --input_arrays={1} '
-                 '--output_arrays={2}'.format(graph_def_file,
-                                              'random', 'add'))
+                 '--output_arrays={2}'.format(graph_def_file, 'random', 'add'))
+    self._run(flags_str, should_succeed=True)
+    os.remove(graph_def_file)
+
+  def testQATFrozenGraphDefInt8(self):
+    with ops.Graph().as_default():
+      in_tensor_1 = array_ops.placeholder(
+          shape=[1, 16, 16, 3], dtype=dtypes.float32, name='inputA')
+      in_tensor_2 = array_ops.placeholder(
+          shape=[1, 16, 16, 3], dtype=dtypes.float32, name='inputB')
+      _ = array_ops.fake_quant_with_min_max_args(
+          in_tensor_1 + in_tensor_2, min=0., max=1., name='output',
+          num_bits=16)  # INT8 inference type works for 16 bits fake quant.
+      sess = session.Session()
+
+    # Write graph to file.
+    graph_def_file = self._getFilepath('model.pb')
+    write_graph(sess.graph_def, '', graph_def_file, False)
+    sess.close()
+
+    flags_str = ('--inference_type=INT8 --std_dev_values=128,128 '
+                 '--mean_values=128,128 '
+                 '--graph_def_file={0} --input_arrays={1},{2} '
+                 '--output_arrays={3}'.format(graph_def_file, 'inputA',
+                                              'inputB', 'output'))
     self._run(flags_str, should_succeed=True)
     os.remove(graph_def_file)
 
@@ -163,8 +189,8 @@ class TfLiteConvertV1Test(TestModels):
   def testKerasFileMLIR(self):
     keras_file = self._getKerasModelFile()
 
-    flags_str = ('--keras_model_file={} --experimental_new_converter'
-                 .format(keras_file))
+    flags_str = (
+        '--keras_model_file={} --experimental_new_converter'.format(keras_file))
     self._run(flags_str, should_succeed=True)
     os.remove(keras_file)
 
@@ -184,7 +210,7 @@ class TfLiteConvertV1Test(TestModels):
     keras_file = self._getKerasModelFile()
     log_dir = self.get_temp_dir()
 
-    flags_str = ('--keras_model_file={} '
+    flags_str = ('--keras_model_file={} --experimental_new_converter=false '
                  '--conversion_summary_dir={}'.format(keras_file, log_dir))
     self._run(flags_str, should_succeed=True)
     os.remove(keras_file)
@@ -296,8 +322,8 @@ class TfLiteConvertV2Test(TestModels):
   def testKerasFileMLIR(self):
     keras_file = self._getKerasModelFile()
 
-    flags_str = ('--keras_model_file={} --experimental_new_converter'
-                 .format(keras_file))
+    flags_str = (
+        '--keras_model_file={} --experimental_new_converter'.format(keras_file))
     self._run(flags_str, should_succeed=True)
     os.remove(keras_file)
 
@@ -308,6 +334,76 @@ class TfLiteConvertV2Test(TestModels):
     self._run(
         '--keras_model_file=model.h5 --saved_model_dir=/tmp/',
         should_succeed=False)
+
+
+class ArgParserTest(test_util.TensorFlowTestCase):
+
+  def test_without_experimental_new_converter(self):
+    args = [
+        '--saved_model_dir=/tmp/saved_model/',
+        '--output_file=/tmp/output.tflite',
+    ]
+
+    # V1 parser.
+    parser = tflite_convert._get_parser(False)
+    parsed_args = parser.parse_args(args)
+    self.assertFalse(parsed_args.experimental_new_converter)
+
+    # V2 parser.
+    parser = tflite_convert._get_parser(True)
+    parsed_args = parser.parse_args(args)
+    self.assertFalse(parsed_args.experimental_new_converter)
+
+  def test_experimental_new_converter(self):
+    args = [
+        '--saved_model_dir=/tmp/saved_model/',
+        '--output_file=/tmp/output.tflite',
+        '--experimental_new_converter',
+    ]
+
+    # V1 parser.
+    parser = tflite_convert._get_parser(False)
+    parsed_args = parser.parse_args(args)
+    self.assertTrue(parsed_args.experimental_new_converter)
+
+    # V2 parser.
+    parser = tflite_convert._get_parser(True)
+    parsed_args = parser.parse_args(args)
+    self.assertTrue(parsed_args.experimental_new_converter)
+
+  def test_experimental_new_converter_true(self):
+    args = [
+        '--saved_model_dir=/tmp/saved_model/',
+        '--output_file=/tmp/output.tflite',
+        '--experimental_new_converter=true',
+    ]
+
+    # V1 parser.
+    parser = tflite_convert._get_parser(False)
+    parsed_args = parser.parse_args(args)
+    self.assertTrue(parsed_args.experimental_new_converter)
+
+    # V2 parser.
+    parser = tflite_convert._get_parser(True)
+    parsed_args = parser.parse_args(args)
+    self.assertTrue(parsed_args.experimental_new_converter)
+
+  def test_experimental_new_converter_false(self):
+    args = [
+        '--saved_model_dir=/tmp/saved_model/',
+        '--output_file=/tmp/output.tflite',
+        '--experimental_new_converter=false',
+    ]
+
+    # V1 parser.
+    parser = tflite_convert._get_parser(False)
+    parsed_args = parser.parse_args(args)
+    self.assertFalse(parsed_args.experimental_new_converter)
+
+    # V2 parser.
+    parser = tflite_convert._get_parser(True)
+    parsed_args = parser.parse_args(args)
+    self.assertFalse(parsed_args.experimental_new_converter)
 
 
 if __name__ == '__main__':

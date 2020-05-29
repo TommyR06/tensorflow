@@ -192,10 +192,7 @@ class ShapeUtil {
   };
 
   // Returns the number of elements are contained within the provided shape;
-  // e.g. for rank 0 (scalars) the result is always 1. Note that sparse shapes
-  // may not actually be able to store this number of elements. See
-  // LayoutUtil::MaxSparseElements(shape) to obtain the maximum number of
-  // elements that can be stored in a sparse shape.
+  // e.g. for rank 0 (scalars) the result is always 1.
   // Precondition: shape.IsArray()
   static int64 ElementsIn(const Shape& shape);
 
@@ -228,19 +225,11 @@ class ShapeUtil {
                                          int64 pointer_size);
 
   // Returns the number of bytes required for the elements in an allocation of
-  // `shape`, which must be an array shape. The return value does not include
-  // the bytes needed to store sparse indices. Dense shapes use a separate
+  // `shape`, which must be an array shape. Shapes use a separate
   // memory location for each element, and so for these shapes,
-  // `ByteSizeOf(shape) == ByteSizeOfElements(shape)`. For dense shapes, this
-  // size also includes padding if present in the layout. For sparse shapes,
-  // `ByteSizeOf(shape) == ByteSizeOfElements(shape) +
-  // ByteSizeOfSparseindices(shape)`.
+  // `ByteSizeOf(shape) == ByteSizeOfElements(shape)`. This
+  // size also includes padding if present in the layout.
   static int64 ByteSizeOfElements(const Shape& shape);
-
-  // Returns the number of bytes required for the sparse indices in an
-  // allocation of shape. The shape must be an array shape. The return value
-  // does not include the bytes needed to store sparse indices.
-  static int64 ByteSizeOfSparseIndices(const Shape& shape);
 
   // Returns a human-readable string that represents the given shape, with or
   // without layout. e.g. "f32[42x12] {0, 1}" or "f32[64]".
@@ -309,6 +298,16 @@ class ShapeUtil {
   // As Equal, but allow one of lhs and rhs to be F16 while the other is F32.
   static bool EqualIgnoringFpPrecision(const Shape& lhs, const Shape& rhs);
 
+  // Two shapes have same structure if all subshape indices of lhs are presented
+  // on rhs and vice versa.
+  // A nested tuple shape of (F32, (S32[2], F32[2, 2])) is structurally equal to
+  // (S32, (F32[3], S32[2])) as their structures are both (,(,))
+  //
+  // In contrast, (F32, (F32, F32)) is structurally different from
+  // ((F32, F32), F32) as the former has structure (,(,)) while the latter has
+  // ((,),)
+  static bool EqualStructure(const Shape& lhs, const Shape& rhs);
+
   // Returns the number of dimensions for which the dimension is not (trivially)
   // 1. e.g., f32[2x1x1] has a true rank of 1D, the other dimensions are just
   // fluff. Note that zero dimensions are included in the true rank, e.g.,
@@ -350,6 +349,9 @@ class ShapeUtil {
   // element type changed to type.
   static Shape ChangeElementType(const Shape& original, PrimitiveType type);
 
+  // Retursn a shape with same dimensions but with all dimensions set to static.
+  static Shape MakeStaticShape(const Shape& original);
+
   // Creates a tuple shape from a slice of element shapes within the tuple.
   static Shape MakeTupleShape(absl::Span<const Shape> shapes);
 
@@ -388,6 +390,9 @@ class ShapeUtil {
   static Shape MakeShape(PrimitiveType element_type,
                          absl::Span<const int64> dimensions);
 
+  // Make a scalar shape with given primitive type.
+  static Shape MakeScalarShape(PrimitiveType element_type);
+
   // Constructs a new shape with the given element type and sequence of
   // potentially dynamic dimensions. The argument 'dynamic_dimensions' indicates
   // with a true value that the respective dimension is dynamic. If the
@@ -397,9 +402,6 @@ class ShapeUtil {
   static Shape MakeShape(PrimitiveType element_type,
                          absl::Span<const int64> dimensions,
                          const std::vector<bool>& dynamic_dimensions);
-
-  // Make a scalar shape with given primitive type.
-  static Shape MakeScalarShape(PrimitiveType element_type);
 
   // Constructs a new shape with the given element type and sequence of
   // dimensions. Method checks if the element type is valid and the shape's
@@ -426,10 +428,6 @@ class ShapeUtil {
                                    absl::Span<const Tile> tiles = {},
                                    int64 element_size_in_bits = 0,
                                    int64 memory_space = 0);
-
-  static Shape MakeShapeWithSparseLayout(PrimitiveType element_type,
-                                         absl::Span<const int64> dimensions,
-                                         int64 max_sparse_elements);
 
   // Returns the same shape except with all dimensions set to be static.
   static Shape MakeShapeWithStaticDimensions(const Shape& shape);
@@ -658,12 +656,16 @@ class ShapeUtil {
   static Shape FilterDimensions(const std::function<bool(int64)>& p,
                                 Shape shape);
 
-  // Iterates through all the shape indexes, in minor to major order, starting
-  // from the base indexes, incrementing by the incr steps, up to count
-  // (index[i] < base[i] + count[i]), and calls the visitor_function with the
-  // current index.
-  // The visitor_function visitor function should return true if it wants to
-  // continue, or false otherwise.
+  // Returns true if `dynamic_shape` has dimensions that are less-equal to the
+  // "bounded_shape".
+  static bool DynamicShapeIsCompatible(const xla::Shape& dynamic_shape,
+                                       const xla::Shape& bounded_shape);
+
+  // Iterates through all the shape indexes, in minor to major order,
+  // starting from the base indexes, incrementing by the incr steps, up to
+  // count (index[i] < base[i] + count[i]), and calls the visitor_function
+  // with the current index. The visitor_function visitor function should
+  // return true if it wants to continue, or false otherwise.
   //
   // visitor_function must be a callable of type
   // StatusOr<bool>(absl::Span<int64>) or compatible.

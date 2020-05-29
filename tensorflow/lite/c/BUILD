@@ -3,18 +3,14 @@ load(
     "tflite_cc_shared_object",
     "tflite_copts",
 )
-
-package(
-    default_visibility = [":experimental"],
-    licenses = ["notice"],  # Apache 2.0
+load(
+    "//tensorflow/lite/micro:build_def.bzl",
+    "cc_library",
 )
 
-package_group(
-    name = "experimental",
-    packages = [
-        "//tensorflow/lite/...",
-        "//third_party/dart/tflite_native/...",  # whitelisted
-    ],
+package(
+    default_visibility = ["//visibility:public"],
+    licenses = ["notice"],  # Apache 2.0
 )
 
 # Generates a platform-specific shared library containing the TensorFlow Lite C
@@ -26,6 +22,9 @@ package_group(
 tflite_cc_shared_object(
     name = "tensorflowlite_c",
     linkopts = select({
+        "//tensorflow:ios": [
+            "-Wl,-exported_symbols_list,$(location //tensorflow/lite/c:exported_symbols.lds)",
+        ],
         "//tensorflow:macos": [
             "-Wl,-exported_symbols_list,$(location //tensorflow/lite/c:exported_symbols.lds)",
         ],
@@ -46,35 +45,27 @@ tflite_cc_shared_object(
 
 cc_library(
     name = "c_api_internal",
-    srcs = [
-        "c_api.h",
-        "common.h",
-    ],
     hdrs = ["c_api_internal.h"],
     copts = tflite_copts(),
     visibility = ["//visibility:private"],
     deps = [
         ":common",
         "//tensorflow/lite:framework",
+        "//tensorflow/lite/core/api",
     ],
 )
 
 cc_library(
     name = "c_api",
     srcs = ["c_api.cc"],
-    hdrs = [
-        "c_api.h",
-        "common.h",
-    ],
+    hdrs = ["c_api.h"],
     copts = tflite_copts(),
-    visibility = [
-        ":experimental",
-    ],
     deps = [
         ":c_api_internal",
         ":common",
         "//tensorflow/lite:framework",
         "//tensorflow/lite:version",
+        "//tensorflow/lite/core/api",
         "//tensorflow/lite/kernels:builtin_ops",
     ],
     alwayslink = 1,
@@ -88,6 +79,8 @@ cc_library(
     deps = [
         ":c_api",
         ":c_api_internal",
+        ":common",
+        "//tensorflow/lite:framework",
         "//tensorflow/lite:kernel_api",
     ],
     alwayslink = 1,
@@ -97,13 +90,14 @@ cc_test(
     name = "c_api_test",
     size = "small",
     srcs = ["c_api_test.cc"],
+    copts = tflite_copts(),
     data = [
         "//tensorflow/lite:testdata/add.bin",
         "//tensorflow/lite:testdata/add_quantized.bin",
     ],
     deps = [
         ":c_api",
-        "//tensorflow/lite/c:c_api_internal",
+        ":common",
         "//tensorflow/lite/testing:util",
         "@com_google_googletest//:gtest",
     ],
@@ -113,10 +107,12 @@ cc_test(
     name = "c_api_experimental_test",
     size = "small",
     srcs = ["c_api_experimental_test.cc"],
+    copts = tflite_copts(),
     data = ["//tensorflow/lite:testdata/add.bin"],
     deps = [
         ":c_api",
         ":c_api_experimental",
+        ":common",
         "//tensorflow/lite:kernel_api",
         "//tensorflow/lite/testing:util",
         "@com_google_googletest//:gtest",
@@ -130,15 +126,14 @@ cc_library(
         "builtin_op_data.h",
         "common.h",
     ],
-    visibility = [
-        "//tensorflow/lite:__subpackages__",
-    ],
+    build_for_embedded = True,
     alwayslink = 1,
 )
 
 # For use with library targets that can't use relative paths.
 exports_files([
     "c_api.h",
+    "c_api_experimental.h",
     "common.h",
 ])
 

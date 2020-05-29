@@ -28,11 +28,14 @@ inline int NumDimensions(const TfLiteTensor* t) { return t->dims->size; }
 inline int SizeOfDimension(const TfLiteTensor* t, int dim) {
   return t->dims->data[dim];
 }
-inline const TfLiteTensor* GetInput(TfLiteContext* context,
+inline const TfLiteTensor* GetInput(const TfLiteContext* context,
                                     const TfLiteNode* node, int index) {
   return &context
               ->tensors[flatbuffers::EndianScalar(node->inputs->data[index])];
 }
+// Note: You must check if result is not null:
+// TfLiteTensor* my_tensor = GetVariableInput(context, node, kMyTensorIdx);
+// TF_LITE_ENSURE(context, my_tensor != nullptr);
 inline TfLiteTensor* GetVariableInput(TfLiteContext* context,
                                       const TfLiteNode* node, int index) {
   TfLiteTensor* tensor =
@@ -74,7 +77,8 @@ inline int64_t NumElements(const TfLiteTensor* t) {
 inline const TfLiteTensor* GetOptionalInputTensor(TfLiteContext* context,
                                                   const TfLiteNode* node,
                                                   int index) {
-  const bool use_tensor = node->inputs->data[index] != kTfLiteOptionalTensor;
+  const bool use_tensor = index < node->inputs->size &&
+                          node->inputs->data[index] != kTfLiteOptionalTensor;
   if (use_tensor) {
     return &context
                 ->tensors[flatbuffers::EndianScalar(node->inputs->data[index])];
@@ -83,6 +87,10 @@ inline const TfLiteTensor* GetOptionalInputTensor(TfLiteContext* context,
 }
 
 // Determines whether tensor is constant.
+// TODO(b/138199592): Introduce new query which checks for constant OR
+// persistent-read-only, which would be useful for most tensor kernels that
+// are potentially dynamic based on the input tensor value availability at the
+// time of prepare.
 inline bool IsConstantTensor(const TfLiteTensor* tensor) {
   return tensor->allocation_type == kTfLiteMmapRo;
 }
@@ -101,6 +109,14 @@ inline void SetTensorToDynamic(TfLiteTensor* tensor) {
   }
 }
 
+// Sets tensor to persistent and read-only.
+inline void SetTensorToPersistentRo(TfLiteTensor* tensor) {
+  if (tensor->allocation_type != kTfLitePersistentRo) {
+    tensor->allocation_type = kTfLitePersistentRo;
+    tensor->data.raw = nullptr;
+  }
+}
+
 // Determines whether it is a hybrid op - one that has float inputs and
 // quantized weights.
 inline bool IsHybridOp(const TfLiteTensor* input, const TfLiteTensor* weight) {
@@ -115,6 +131,13 @@ TfLiteStatus PopulateConvolutionQuantizationParams(
     const TfLiteFusedActivation& activation, int32_t* multiplier, int* shift,
     int32_t* output_activation_min, int32_t* output_activation_max,
     int32_t* per_channel_multiplier, int* per_channel_shift);
+
+TfLiteStatus PopulateConvolutionQuantizationParams(
+    TfLiteContext* context, const TfLiteTensor* input,
+    const TfLiteTensor* filter, const TfLiteTensor* bias, TfLiteTensor* output,
+    const TfLiteFusedActivation& activation, int32_t* multiplier, int* shift,
+    int32_t* output_activation_min, int32_t* output_activation_max,
+    int32_t* per_channel_multiplier, int* per_channel_shift, int num_channels);
 
 // Calculates the multiplication factor for a quantized convolution (or
 // quantized depthwise convolution) involving the given tensors. Returns an
@@ -139,12 +162,7 @@ TfLiteStatus CalculateActivationRangeQuantized(TfLiteContext* context,
                                                TfLiteTensor* output,
                                                int32_t* act_min,
                                                int32_t* act_max);
-void CalculateActivationRangeUint8(TfLiteFusedActivation activation,
-                                   TfLiteTensor* output, int32_t* act_min,
-                                   int32_t* act_max);
-void CalculateActivationRangeInt8(TfLiteFusedActivation activation,
-                                  TfLiteTensor* output, int32_t* act_min,
-                                  int32_t* act_max);
+
 // Calculates the useful range of an activation layer given its activation
 // tensor.a
 template <typename T>
@@ -168,11 +186,19 @@ void CalculateActivationRange(TfLiteFusedActivation activation,
 // Return true if the given tensors have the same shape.
 bool HaveSameShapes(const TfLiteTensor* input1, const TfLiteTensor* input2);
 
-// Calculate the output_shape that is necessary for element-wise operations
+// Calculates the output_shape that is necessary for element-wise operations
 // with broadcasting involving the two input tensors.
 TfLiteStatus CalculateShapeForBroadcast(TfLiteContext* context,
                                         const TfLiteTensor* input1,
                                         const TfLiteTensor* input2,
+                                        TfLiteIntArray** output_shape);
+
+// Calculates the output_shape that is necessary for element-wise operations
+// with broadcasting involving the three input tensors.
+TfLiteStatus CalculateShapeForBroadcast(TfLiteContext* context,
+                                        const TfLiteTensor* input1,
+                                        const TfLiteTensor* input2,
+                                        const TfLiteTensor* input3,
                                         TfLiteIntArray** output_shape);
 }  // namespace tflite
 
