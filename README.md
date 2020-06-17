@@ -158,3 +158,10 @@ Learn more about the
 ## License
 
 [Apache License 2.0](LICENSE)
+
+### TFLITE-SOC License Note
+
+Extensions to this project downloads and uses SystemC Library that is under the
+following license:
+
+* https://www.accellera.org/images/about/policies/SystemC_Open_Source_License_v3.3.pdf

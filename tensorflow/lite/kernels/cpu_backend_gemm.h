@@ -1,4 +1,5 @@
 /* Copyright 2019 The TensorFlow Authors. All Rights Reserved.
+   Copyright 2020 The TFLITE-SOC Authors. All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -26,6 +27,10 @@ limitations under the License.
 #ifndef TFLITE_WITH_RUY
 #include "tensorflow/lite/kernels/cpu_backend_gemm_eigen.h"
 #include "tensorflow/lite/kernels/cpu_backend_gemm_gemmlowp.h"
+#endif
+
+#ifdef TOGGLE_TFLITE_SOC
+#include "tensorflow/lite/kernels/modeling/util.sc.h"
 #endif
 
 namespace tflite {
@@ -107,6 +112,17 @@ void Gemm(const MatrixParams<LhsScalar>& lhs_params, const LhsScalar* lhs_data,
       return;
     }
   }
+
+#ifdef TOGGLE_TFLITE_SOC
+  // GemmImpl::Run(...) function executes a GEMM with different libraries
+  // depending on the context.
+  //
+  // For quantized inputs it will use gemmlowp library
+  // For floating pointing inputs it will use eigen library
+  tflite_soc::PrintMatricesInfo<LhsScalar, RhsScalar, DstScalar>(
+      lhs_params, rhs_params, dst_params);
+#endif
+
   ruy::profiler::ScopeLabel label2("cpu_backend_gemm::Gemm: general GEMM");
   GemmImpl<LhsScalar, RhsScalar, AccumScalar, DstScalar,
            quantization_flavor>::Run(lhs_params, lhs_data, rhs_params, rhs_data,
