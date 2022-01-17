@@ -200,6 +200,7 @@ cc_library(
     deps = [
         ":benchmark_params",
         ":benchmark_utils",
+        "//tensorflow/lite/examples/systemc:hello_channel_lib",
         "//tensorflow/core/util:stats_calculator_portable",
         "//tensorflow/lite:framework",
         "//tensorflow/lite/c:common",

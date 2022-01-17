@@ -18,6 +18,11 @@ limitations under the License.
 #include "tensorflow/lite/tools/benchmark/benchmark_tflite_model.h"
 #include "tensorflow/lite/tools/logging.h"
 
+#include <systemc/systemc.h>
+#include "tensorflow/lite/examples/systemc/channel/stack.sc.h"
+#include "tensorflow/lite/examples/systemc/channel/producer.sc.h"
+#include "tensorflow/lite/examples/systemc/channel/consumer.sc.h"
+
 namespace tflite {
 namespace benchmark {
 
@@ -28,6 +33,25 @@ int Main(int argc, char** argv) {
     TFLITE_LOG(ERROR) << "Benchmarking failed.";
     return EXIT_FAILURE;
   }
+
+  // Channel Test in SysC
+  sc_clock ClkSlow("ClkSlow", 100.0, SC_NS);
+  sc_clock ClkFast("ClkFast", 50.0, SC_NS);
+
+
+  stack Stack1("S1");
+
+  producer P1("P1");
+  P1.out(Stack1);
+  P1.Clock(ClkSlow);
+
+  // Consumer consumes faster then producer
+  consumer C1("C1");
+  C1.in(Stack1);
+  C1.Clock(ClkFast);
+
+  sc_start(5000, SC_NS);
+
   return EXIT_SUCCESS;
 }
 }  // namespace benchmark

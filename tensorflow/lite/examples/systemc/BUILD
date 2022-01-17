@@ -60,6 +60,21 @@ cc_binary(
     ],
 )
 
+cc_library(
+    name = "hello_channel_lib",
+    srcs = [],
+    hdrs = [
+        "channel/stack_if.sc.h",
+        "channel/stack.sc.h",
+        "channel/producer.sc.h",
+        "channel/consumer.sc.h",
+    ],
+    copts = common_copts,
+    deps = [
+        "@systemc//:systemc",
+    ],
+)
+
 cc_test(
     name = "sc_example_test",
     srcs = ["sc_gtest_test.sc.cc"],
